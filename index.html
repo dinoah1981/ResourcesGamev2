@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌍 Resource Trade Challenge</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-dark: #0a0f1a;
+            --bg-card: #131b2e;
+            --bg-hover: #1a2540;
+            --accent-gold: #fbbf24;
+            --accent-emerald: #10b981;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-rose: #f43f5e;
+            --accent-cyan: #06b6d4;
+            --accent-orange: #f97316;
+            --text-primary: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #1e293b;
+            --oil-color: #475569;
+            --farm-color: #22c55e;
+            --mineral-color: #a855f7;
+            --tech-color: #3b82f6;
+            --coast-color: #06b6d4;
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .bg-pattern {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+        }
+        .header h1 {
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-emerald));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+        .header p { color: var(--text-muted); font-size: 1rem; }
+        .screen { display: none; animation: fadeIn 0.4s ease; }
+        .screen.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        /* Country Selection */
+        .country-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .country-btn {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .country-btn:hover {
+            border-color: var(--accent-gold);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(251, 191, 36, 0.2);
+        }
+        .country-btn .emoji { font-size: 2rem; display: block; margin-bottom: 6px; }
+        .country-btn .name { font-weight: 700; color: var(--text-primary); font-size: 1rem; }
+        .country-btn .specialty { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+        /* Progress Bar */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        .round-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .round-badge {
+            background: var(--accent-blue);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        .progress-mini {
+            width: 120px;
+            height: 6px;
+            background: var(--bg-hover);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-mini-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.5s ease;
+        }
+        .score-badge {
+            background: var(--accent-gold);
+            color: #000;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-family: 'Space Mono', monospace;
+        }
+        /* Victory Goal */
+        .victory-goal {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(16, 185, 129, 0.1));
+            border: 2px solid var(--accent-gold);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .victory-goal h3 {
+            color: var(--accent-gold);
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        .goal-resources {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .goal-resource {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        .goal-resource.met { border: 2px solid var(--accent-emerald); background: rgba(16, 185, 129, 0.1); }
+        .goal-resource.unmet { border: 2px solid var(--border); opacity: 0.7; }
+        /* Resources Display */
+        .resources-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+        }
+        .resource-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--bg-card);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+        .resource-item .icon { font-size: 1.2rem; }
+        .resource-item .count {
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+        }
+        .resource-item.oil { border-color: var(--oil-color); }
+        .resource-item.farm { border-color: var(--farm-color); }
+        .resource-item.mineral { border-color: var(--mineral-color); }
+        .resource-item.tech { border-color: var(--tech-color); }
+        .resource-item.coast { border-color: var(--coast-color); }
+        .resource-change {
+            animation: pulse 0.5s ease;
+        }
+        .resource-change.positive { color: var(--accent-emerald); }
+        .resource-change.negative { color: var(--accent-rose); }
+        /* Leaderboard */
+        .leaderboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        .leader-card {
+            background: var(--bg-hover);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .leader-card.player {
+            border-color: var(--accent-gold);
+            background: rgba(251, 191, 36, 0.1);
+        }
+        .leader-card.leader {
+            border-color: var(--accent-emerald);
+        }
+        .leader-card .rank {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .leader-card .name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+        .leader-card .total {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.3rem;
+            color: var(--accent-gold);
+        }
+        /* Trade Interface */
+        .trade-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 700px) {
+            .trade-panel { grid-template-columns: 1fr; }
+        }
+        .trade-section {
+            background: var(--bg-hover);
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .trade-section h4 {
+            margin-bottom: 12px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .country-select {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .country-chip {
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+        .country-chip:hover { border-color: var(--accent-blue); }
+        .country-chip.selected {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.2);
+        }
+        .country-chip .emoji { margin-right: 6px; }
+        .resource-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .resource-select-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+        }
+        .resource-select-btn:hover:not(:disabled) { border-color: var(--accent-blue); }
+        .resource-select-btn.selected {
+            border-color: var(--accent-emerald);
+            background: rgba(16, 185, 129, 0.2);
+        }
+        .resource-select-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .amount-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .amount-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .amount-btn:hover { border-color: var(--accent-blue); }
+        .amount-display {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.3rem;
+            min-width: 40px;
+            text-align: center;
+        }
+        /* Trade Actions */
+        .trade-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-emerald), #059669);
+            color: white;
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        }
+        .btn-secondary {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border: 2px solid var(--border);
+        }
+        .btn-secondary:hover:not(:disabled) { border-color: var(--accent-gold); }
+        .btn-question {
+            background: linear-gradient(135deg, var(--accent-purple), #7c3aed);
+            color: white;
+        }
+        .btn-skip {
+            background: transparent;
+            color: var(--text-muted);
+            border: 2px solid var(--border);
+        }
+        /* Trade Response */
+        .trade-response {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-hover));
+            border: 2px solid var(--accent-orange);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 16px;
+        }
+        .trade-response h4 {
+            color: var(--accent-orange);
+            margin-bottom: 12px;
+        }
+        .response-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .response-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+        }
+        .response-btn:hover {
+            border-color: var(--accent-emerald);
+            background: var(--bg-hover);
+        }
+        .response-btn .give { color: var(--accent-rose); }
+        .response-btn .get { color: var(--accent-emerald); }
+        /* Questions */
+        .question-card {
+            background: linear-gradient(135deg, var(--bg-card), #1a1f35);
+            border: 2px solid var(--accent-purple);
+            border-radius: 16px;
+            padding: 24px;
+            margin: 16px 0;
+        }
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .question-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .difficulty-easy { background: var(--accent-emerald); color: white; }
+        .difficulty-medium { background: var(--accent-gold); color: black; }
+        .difficulty-hard { background: var(--accent-orange); color: white; }
+        .difficulty-expert { background: var(--accent-rose); color: white; }
+        .stakes-display {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .stakes-display .bonus { color: var(--accent-emerald); }
+        .stakes-display .penalty { color: var(--accent-rose); }
+        .question-text {
+            font-size: 1.15rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .answer-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .answer-btn {
+            padding: 14px 18px;
+            background: var(--bg-hover);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            text-align: left;
+        }
+        .answer-btn:hover:not(.disabled) {
+            border-color: var(--accent-purple);
+            background: rgba(139, 92, 246, 0.1);
+        }
+        .answer-btn.correct {
+            border-color: var(--accent-emerald);
+            background: rgba(16, 185, 129, 0.2);
+        }
+        .answer-btn.incorrect {
+            border-color: var(--accent-rose);
+            background: rgba(244, 63, 94, 0.1);
+            animation: shake 0.5s ease;
+        }
+        .answer-btn.disabled { cursor: not-allowed; opacity: 0.7; }
+        .feedback {
+            margin-top: 16px;
+            padding: 16px;
+            border-radius: 10px;
+            display: none;
+        }
+        .feedback.show { display: block; animation: fadeIn 0.3s ease; }
+        .feedback.correct {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid var(--accent-emerald);
+        }
+        .feedback.incorrect {
+            background: rgba(244, 63, 94, 0.15);
+            border: 1px solid var(--accent-rose);
+        }
+        .resource-reward {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .resource-reward.bonus {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-emerald);
+        }
+        .resource-reward.penalty {
+            background: rgba(244, 63, 94, 0.2);
+            color: var(--accent-rose);
+        }
+        /* AI Activity Log */
+        .ai-log {
+            max-height: 120px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .ai-log-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .ai-log-entry:last-child { border-bottom: none; }
+        /* Results */
+        .results-header {
+            text-align: center;
+            padding: 30px 0;
+        }
+        .results-header h2 { font-size: 2rem; margin-bottom: 8px; }
+        .results-header.victory h2 { color: var(--accent-gold); }
+        .results-header.defeat h2 { color: var(--accent-rose); }
+        .final-standings {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .standing-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            background: var(--bg-hover);
+            border-radius: 10px;
+            border: 2px solid transparent;
+        }
+        .standing-row.player { border-color: var(--accent-gold); background: rgba(251, 191, 36, 0.1); }
+        .standing-row.winner { border-color: var(--accent-emerald); }
+        .standing-row .rank-medal { font-size: 1.5rem; margin-right: 12px; }
+        .standing-row .name { font-weight: 600; flex: 1; }
+        .standing-row .total {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.2rem;
+            color: var(--accent-gold);
+        }
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            max-width: 350px;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .notification.success {
+            background: var(--accent-emerald);
+            color: white;
+        }
+        .notification.error {
+            background: var(--accent-rose);
+            color: white;
+        }
+        .notification.info {
+            background: var(--accent-blue);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+    <div class="container">
+        <header class="header">
+            <h1>🌍 Resource Trade Challenge</h1>
+            <p>Compete for Resources in Global Trade</p>
+        </header>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen active">
+            <div class="card">
+                <div class="card-title">🎮 How to Play</div>
+                <p style="color: var(--text-muted); line-height: 1.7; margin-bottom: 16px;">
+                    Lead your country in a <strong style="color: var(--accent-gold);">10-round competition</strong> against 4 AI-controlled nations. Trade resources strategically to reach the <strong style="color: var(--accent-emerald);">Victory Goal</strong> before your opponents!
+                </p>
+                <p style="color: var(--text-muted); line-height: 1.7; margin-bottom: 16px;">
+                    <strong>Each round:</strong> Propose trades, respond to AI offers, and answer progressively harder economics questions for <span style="color: var(--accent-emerald);">resource bonuses</span> (or <span style="color: var(--accent-rose);">penalties</span> for wrong answers).
+                </p>
+                <p style="color: var(--text-muted); line-height: 1.7;">
+                    <strong>Win condition:</strong> Be the first to collect <strong style="color: var(--accent-gold);">at least 4 of EACH resource</strong>, or have the highest total resources after 10 rounds.
+                </p>
+            </div>
+
+            <div class="card">
+                <div class="card-title">🏳️ Choose Your Country</div>
+                <div class="country-grid" id="country-selection"></div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="game-header">
+                <div class="round-info">
+                    <span class="round-badge">Round <span id="current-round">1</span>/10</span>
+                    <div class="progress-mini">
+                        <div class="progress-mini-fill" id="progress-fill" style="width: 10%"></div>
+                    </div>
+                </div>
+                <span class="score-badge">🏆 <span id="score">0</span> pts</span>
+            </div>
+
+            <!-- Victory Goal -->
+            <div class="victory-goal">
+                <h3>🎯 Victory Goal: Collect 4+ of Each Resource</h3>
+                <div class="goal-resources" id="goal-display"></div>
+            </div>
+
+            <!-- Player Resources -->
+            <div class="card">
+                <div class="card-title">
+                    <span id="player-emoji">🏭</span>
+                    <span id="player-name">Your Country</span>
+                    <span style="margin-left: auto; font-size: 0.85rem; color: var(--text-muted);">
+                        Total: <span id="player-total" style="color: var(--accent-gold);">0</span>
+                    </span>
+                </div>
+                <div class="resources-bar" id="player-resources"></div>
+            </div>
+
+            <!-- Leaderboard -->
+            <div class="card">
+                <div class="card-title">📊 Standings</div>
+                <div class="leaderboard" id="leaderboard"></div>
+            </div>
+
+            <!-- Main Game Content -->
+            <div id="game-content"></div>
+
+            <!-- AI Activity Log -->
+            <div class="card">
+                <div class="card-title">📜 Trade Activity</div>
+                <div class="ai-log" id="ai-log"></div>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="screen">
+            <div class="results-header" id="results-header">
+                <h2>🏆 Game Complete!</h2>
+                <p style="color: var(--text-muted);" id="results-subtitle"></p>
+            </div>
+            <div class="card">
+                <div class="card-title">📊 Final Standings</div>
+                <div class="final-standings" id="final-standings"></div>
+            </div>
+            <div class="card" id="player-final-resources"></div>
+            <div style="text-align: center; margin-top: 24px;">
+                <button class="btn btn-primary" onclick="restartGame()">🔄 Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== GAME DATA =====
+        const countries = {
+            oilania: { name: "Oilania", emoji: "🏭", specialty: "Oil-rich", resources: { oil: 5, farm: 1, mineral: 1, tech: 0, coast: 0 } },
+            farmania: { name: "Farmania", emoji: "🌾", specialty: "Agricultural", resources: { oil: 0, farm: 5, mineral: 1, tech: 0, coast: 1 } },
+            techland: { name: "Techland", emoji: "💻", specialty: "Tech hub", resources: { oil: 1, farm: 0, mineral: 1, tech: 5, coast: 0 } },
+            minera: { name: "Minera", emoji: "💎", specialty: "Mining", resources: { oil: 1, farm: 0, mineral: 5, tech: 0, coast: 1 } },
+            coastalia: { name: "Coastalia", emoji: "🏖️", specialty: "Coastal", resources: { oil: 0, farm: 1, mineral: 0, tech: 1, coast: 5 } }
+        };
+
+        const resourceInfo = {
+            oil: { emoji: "🛢️", name: "Oil", color: "oil" },
+            farm: { emoji: "🌾", name: "Farm", color: "farm" },
+            mineral: { emoji: "💎", name: "Mineral", color: "mineral" },
+            tech: { emoji: "💻", name: "Tech", color: "tech" },
+            coast: { emoji: "🏖️", name: "Coast", color: "coast" }
+        };
+
+        const VICTORY_GOAL = 4; // Need 4 of each resource to win
+
+        // Questions organized by difficulty
+        const questions = {
+            easy: [
+                { q: "What is a NATURAL RESOURCE?", opts: ["A factory product", "Materials from nature used to produce goods", "Money", "A type of tax"], correct: 1, explanation: "Natural resources come from nature — oil, minerals, farmland — and are used to produce goods." },
+                { q: "When buyers want MORE than sellers have, this is called a:", opts: ["Surplus", "Equilibrium", "Shortage", "Trade"], correct: 2, explanation: "A shortage occurs when demand exceeds supply." },
+                { q: "What does EXPORT mean?", opts: ["Buy from another country", "Sell to another country", "Keep resources", "Destroy resources"], correct: 1, explanation: "Export means selling goods or resources to other countries." },
+                { q: "The price where supply equals demand is called:", opts: ["Maximum price", "Equilibrium price", "Minimum price", "Fixed price"], correct: 1, explanation: "Equilibrium is the balance point where supply meets demand." }
+            ],
+            medium: [
+                { q: "Why do countries trade with each other?", opts: ["Leaders are friends", "Required by law", "No country has all resources it needs", "To start wars"], correct: 2, explanation: "Resources are distributed unevenly, so trade allows countries to get what they lack." },
+                { q: "If a country has MORE of a resource than it needs, it can:", opts: ["Raise prices infinitely", "Export to other countries", "Destroy the excess", "Nothing"], correct: 1, explanation: "Countries with surplus resources can export them to earn income and help others." },
+                { q: "Which creates an INCENTIVE for oil-rich countries to trade with tech countries?", opts: ["Government orders", "Supply and demand", "Friendship", "No incentive exists"], correct: 1, explanation: "Supply and demand create natural trade incentives — each has what the other needs." },
+                { q: "If market price is ABOVE equilibrium, what happens?", opts: ["Shortage develops", "Surplus develops, price falls", "Nothing changes", "Demand increases"], correct: 1, explanation: "Prices above equilibrium create surplus, pushing prices down to equilibrium." }
+            ],
+            hard: [
+                { q: "COMPARATIVE ADVANTAGE means a country should:", opts: ["Produce everything itself", "Specialize in what it produces most efficiently", "Import everything", "Avoid all trade"], correct: 1, explanation: "Countries benefit by specializing in goods they can produce relatively more efficiently than others." },
+                { q: "If Farmania can produce food with fewer resources than Techland, Farmania has:", opts: ["Absolute advantage in food", "Comparative advantage in tech", "No advantage", "Trade deficit"], correct: 0, explanation: "Absolute advantage means producing more output with the same inputs." },
+                { q: "INTERDEPENDENCE in global trade means:", opts: ["Countries are enemies", "Countries rely on each other", "Countries are isolated", "Trade is illegal"], correct: 1, explanation: "Interdependence means countries depend on each other for resources and goods." },
+                { q: "A country imposing TARIFFS on imports will likely:", opts: ["Lower domestic prices", "Raise domestic prices", "Have no effect", "Increase imports"], correct: 1, explanation: "Tariffs (taxes on imports) raise prices of foreign goods, often raising domestic prices too." }
+            ],
+            expert: [
+                { q: "(AP) If a nation's terms of trade improve, which is TRUE?", opts: ["Export prices fell relative to imports", "Export prices rose relative to imports", "Trade volume decreased", "GDP must fall"], correct: 1, explanation: "Improved terms of trade mean a country's exports buy more imports — export prices rose relative to import prices." },
+                { q: "(AP) Under free trade, a country will export goods in which it has:", opts: ["Absolute disadvantage", "Comparative disadvantage", "Comparative advantage", "No specialization"], correct: 2, explanation: "Countries export goods where they have comparative advantage — lower opportunity cost." },
+                { q: "(AP) A quota on imports differs from a tariff because quotas:", opts: ["Generate government revenue", "Set a maximum quantity, not price", "Lower prices", "Are always better"], correct: 1, explanation: "Quotas limit quantity directly; tariffs raise prices but don't cap quantity." },
+                { q: "(AP) If Minera can produce 10 minerals OR 5 tech, its opportunity cost of 1 tech is:", opts: ["0.5 minerals", "2 minerals", "5 minerals", "10 minerals"], correct: 1, explanation: "To make 1 tech, Minera gives up 10/5 = 2 minerals. Opportunity cost = 2 minerals per tech." }
+            ]
+        };
+
+        // ===== GAME STATE =====
+        let gameState = {
+            playerCountry: null,
+            playerResources: {},
+            aiCountries: {},
+            score: 0,
+            round: 0,
+            maxRounds: 10,
+            questionsAsked: { easy: 0, medium: 0, hard: 0, expert: 0 },
+            activityLog: [],
+            pendingTrade: null,
+            gameOver: false
+        };
+
+        // ===== INITIALIZATION =====
+        function initCountrySelection() {
+            const grid = document.getElementById('country-selection');
+            grid.innerHTML = '';
+            Object.entries(countries).forEach(([id, country]) => {
+                const btn = document.createElement('button');
+                btn.className = 'country-btn';
+                btn.innerHTML = `
+                    <span class="emoji">${country.emoji}</span>
+                    <span class="name">${country.name}</span>
+                    <span class="specialty">${country.specialty}</span>
+                `;
+                btn.onclick = () => selectCountry(id);
+                grid.appendChild(btn);
+            });
+        }
+
+        function selectCountry(countryId) {
+            gameState.playerCountry = countryId;
+            gameState.playerResources = { ...countries[countryId].resources };
+            gameState.score = 0;
+            gameState.round = 0;
+            gameState.questionsAsked = { easy: 0, medium: 0, hard: 0, expert: 0 };
+            gameState.activityLog = [];
+            gameState.gameOver = false;
+
+            // Initialize AI countries
+            gameState.aiCountries = {};
+            Object.entries(countries).forEach(([id, country]) => {
+                if (id !== countryId) {
+                    gameState.aiCountries[id] = {
+                        ...country,
+                        resources: { ...country.resources },
+                        strategy: Math.random() // Random aggression level
+                    };
+                }
+            });
+
+            showScreen('game-screen');
+            updateAllDisplays();
+            startRound();
+        }
+
+        // ===== DISPLAY UPDATES =====
+        function updateAllDisplays() {
+            updatePlayerDisplay();
+            updateGoalDisplay();
+            updateLeaderboard();
+            updateActivityLog();
+        }
+
+        function updatePlayerDisplay() {
+            const country = countries[gameState.playerCountry];
+            document.getElementById('player-emoji').textContent = country.emoji;
+            document.getElementById('player-name').textContent = country.name;
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('current-round').textContent = gameState.round;
+            document.getElementById('progress-fill').style.width = `${(gameState.round / gameState.maxRounds) * 100}%`;
+
+            const total = Object.values(gameState.playerResources).reduce((a, b) => a + b, 0);
+            document.getElementById('player-total').textContent = total;
+
+            const resourcesDiv = document.getElementById('player-resources');
+            resourcesDiv.innerHTML = Object.entries(gameState.playerResources).map(([key, count]) => {
+                const info = resourceInfo[key];
+                return `<div class="resource-item ${info.color}">
+                    <span class="icon">${info.emoji}</span>
+                    <span class="count">${count}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function updateGoalDisplay() {
+            const goalDiv = document.getElementById('goal-display');
+            goalDiv.innerHTML = Object.entries(resourceInfo).map(([key, info]) => {
+                const count = gameState.playerResources[key];
+                const met = count >= VICTORY_GOAL;
+                return `<div class="goal-resource ${met ? 'met' : 'unmet'}">
+                    ${info.emoji} ${count}/${VICTORY_GOAL} ${met ? '✅' : ''}
+                </div>`;
+            }).join('');
+        }
+
+        function updateLeaderboard() {
+            const standings = getStandings();
+            const leaderDiv = document.getElementById('leaderboard');
+            leaderDiv.innerHTML = standings.slice(0, 5).map((entry, idx) => {
+                const isPlayer = entry.id === gameState.playerCountry;
+                const isLeader = idx === 0;
+                return `<div class="leader-card ${isPlayer ? 'player' : ''} ${isLeader ? 'leader' : ''}">
+                    <div class="rank">#${idx + 1}</div>
+                    <div class="name">${entry.emoji} ${entry.name}</div>
+                    <div class="total">${entry.total}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function updateActivityLog() {
+            const logDiv = document.getElementById('ai-log');
+            logDiv.innerHTML = gameState.activityLog.slice(-8).map(entry => 
+                `<div class="ai-log-entry">${entry}</div>`
+            ).join('');
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function getStandings() {
+            const standings = [];
+            
+            // Player
+            const playerTotal = Object.values(gameState.playerResources).reduce((a, b) => a + b, 0);
+            standings.push({
+                id: gameState.playerCountry,
+                name: countries[gameState.playerCountry].name,
+                emoji: countries[gameState.playerCountry].emoji,
+                total: playerTotal,
+                resources: { ...gameState.playerResources }
+            });
+
+            // AI countries
+            Object.entries(gameState.aiCountries).forEach(([id, ai]) => {
+                const total = Object.values(ai.resources).reduce((a, b) => a + b, 0);
+                standings.push({
+                    id,
+                    name: ai.name,
+                    emoji: ai.emoji,
+                    total,
+                    resources: { ...ai.resources }
+                });
+            });
+
+            return standings.sort((a, b) => b.total - a.total);
+        }
+
+        function addLog(message) {
+            gameState.activityLog.push(`Round ${gameState.round}: ${message}`);
+            updateActivityLog();
+        }
+
+        // ===== ROUND MANAGEMENT =====
+        function startRound() {
+            gameState.round++;
+            
+            if (checkVictory()) {
+                endGame();
+                return;
+            }
+
+            if (gameState.round > gameState.maxRounds) {
+                endGame();
+                return;
+            }
+
+            updateAllDisplays();
+            
+            // AI makes trades among themselves
+            runAITrades();
+            
+            // Show player turn
+            showPlayerTurn();
+        }
+
+        function runAITrades() {
+            const aiIds = Object.keys(gameState.aiCountries);
+            
+            // Each AI attempts 1-2 trades
+            aiIds.forEach(aiId => {
+                const ai = gameState.aiCountries[aiId];
+                const partners = aiIds.filter(id => id !== aiId);
+                
+                if (partners.length === 0 || Math.random() > 0.7) return;
+
+                const partnerId = partners[Math.floor(Math.random() * partners.length)];
+                const partner = gameState.aiCountries[partnerId];
+
+                // Find what AI has excess of (>2) and what it needs (<2)
+                const aiExcess = Object.entries(ai.resources).filter(([_, v]) => v > 2).map(([k]) => k);
+                const aiNeeds = Object.entries(ai.resources).filter(([_, v]) => v < 2).map(([k]) => k);
+                const partnerExcess = Object.entries(partner.resources).filter(([_, v]) => v > 2).map(([k]) => k);
+
+                if (aiExcess.length > 0 && partnerExcess.length > 0) {
+                    const give = aiExcess[Math.floor(Math.random() * aiExcess.length)];
+                    const get = partnerExcess.find(r => aiNeeds.includes(r)) || partnerExcess[0];
+
+                    if (give && get && give !== get && ai.resources[give] > 0 && partner.resources[get] > 0) {
+                        ai.resources[give]--;
+                        ai.resources[get]++;
+                        partner.resources[get]--;
+                        partner.resources[give]++;
+                        
+                        addLog(`${ai.emoji} ${ai.name} traded ${resourceInfo[give].emoji} with ${partner.emoji} ${partner.name} for ${resourceInfo[get].emoji}`);
+                    }
+                }
+            });
+        }
+
+        function showPlayerTurn() {
+            // Check if AI wants to propose a trade to player
+            const aiProposal = generateAIProposal();
+            
+            const content = document.getElementById('game-content');
+            content.innerHTML = `
+                <div class="card">
+                    <div class="card-title">🤝 Your Turn - Round ${gameState.round}</div>
+                    
+                    <div class="trade-panel">
+                        <div class="trade-section">
+                            <h4>📤 You Give</h4>
+                            <div class="resource-selector" id="give-selector"></div>
+                            <div class="amount-control" id="give-amount" style="display: none;">
+                                <button class="amount-btn" onclick="adjustAmount('give', -1)">−</button>
+                                <span class="amount-display" id="give-amount-display">1</span>
+                                <button class="amount-btn" onclick="adjustAmount('give', 1)">+</button>
+                            </div>
+                        </div>
+                        
+                        <div class="trade-section">
+                            <h4>📥 You Want</h4>
+                            <div class="country-select" id="partner-select"></div>
+                            <div class="resource-selector" id="want-selector"></div>
+                            <div class="amount-control" id="want-amount" style="display: none;">
+                                <button class="amount-btn" onclick="adjustAmount('want', -1)">−</button>
+                                <span class="amount-display" id="want-amount-display">1</span>
+                                <button class="amount-btn" onclick="adjustAmount('want', 1)">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="trade-actions">
+                        <button class="btn btn-primary" id="propose-btn" onclick="proposeTrade()" disabled>
+                            🤝 Propose Trade
+                        </button>
+                        <button class="btn btn-question" onclick="showQuestion()">
+                            📚 Answer Question (+Resources)
+                        </button>
+                        <button class="btn btn-skip" onclick="skipTurn()">
+                            ⏭️ Skip Turn
+                        </button>
+                    </div>
+                </div>
+                
+                ${aiProposal ? `
+                <div class="trade-response">
+                    <h4>${aiProposal.from.emoji} ${aiProposal.from.name} wants to trade with you!</h4>
+                    <div class="response-options">
+                        ${aiProposal.options.map((opt, i) => `
+                            <button class="response-btn" onclick="respondToAI(${i})">
+                                <span class="give">Give: ${opt.give} ${resourceInfo[opt.giveType].emoji}</span>
+                                <span>⇄</span>
+                                <span class="get">Get: ${opt.get} ${resourceInfo[opt.getType].emoji}</span>
+                            </button>
+                        `).join('')}
+                        <button class="response-btn" onclick="declineAI()" style="border-color: var(--accent-rose);">
+                            ❌ Decline all offers
+                        </button>
+                    </div>
+                </div>
+                ` : ''}
+            `;
+
+            setupTradeInterface();
+            if (aiProposal) {
+                gameState.pendingTrade = aiProposal;
+            }
+        }
+
+        function setupTradeInterface() {
+            // Give selector
+            const giveSelector = document.getElementById('give-selector');
+            giveSelector.innerHTML = Object.entries(gameState.playerResources).map(([key, count]) => {
+                const info = resourceInfo[key];
+                return `<button class="resource-select-btn" data-resource="${key}" onclick="selectGive('${key}')" ${count === 0 ? 'disabled' : ''}>
+                    ${info.emoji} ${info.name} (${count})
+                </button>`;
+            }).join('');
+
+            // Partner selector
+            const partnerSelect = document.getElementById('partner-select');
+            partnerSelect.innerHTML = Object.entries(gameState.aiCountries).map(([id, ai]) => 
+                `<button class="country-chip" data-country="${id}" onclick="selectPartner('${id}')">
+                    <span class="emoji">${ai.emoji}</span>${ai.name}
+                </button>`
+            ).join('');
+
+            window.tradeState = { give: null, giveAmount: 1, want: null, wantAmount: 1, partner: null };
+        }
+
+        function selectGive(resource) {
+            window.tradeState.give = resource;
+            document.querySelectorAll('#give-selector .resource-select-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.resource === resource);
+            });
+            document.getElementById('give-amount').style.display = 'flex';
+            window.tradeState.giveAmount = 1;
+            document.getElementById('give-amount-display').textContent = 1;
+            updateProposeBtnState();
+        }
+
+        function selectPartner(partnerId) {
+            window.tradeState.partner = partnerId;
+            document.querySelectorAll('#partner-select .country-chip').forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.country === partnerId);
+            });
+            
+            // Update want selector based on partner's resources
+            const partner = gameState.aiCountries[partnerId];
+            const wantSelector = document.getElementById('want-selector');
+            wantSelector.innerHTML = Object.entries(partner.resources).map(([key, count]) => {
+                const info = resourceInfo[key];
+                return `<button class="resource-select-btn" data-resource="${key}" onclick="selectWant('${key}')" ${count === 0 ? 'disabled' : ''}>
+                    ${info.emoji} ${info.name} (${count})
+                </button>`;
+            }).join('');
+            
+            window.tradeState.want = null;
+            document.getElementById('want-amount').style.display = 'none';
+            updateProposeBtnState();
+        }
+
+        function selectWant(resource) {
+            window.tradeState.want = resource;
+            document.querySelectorAll('#want-selector .resource-select-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.resource === resource);
+            });
+            document.getElementById('want-amount').style.display = 'flex';
+            window.tradeState.wantAmount = 1;
+            document.getElementById('want-amount-display').textContent = 1;
+            updateProposeBtnState();
+        }
+
+        function adjustAmount(type, delta) {
+            const key = type === 'give' ? 'giveAmount' : 'wantAmount';
+            const resource = type === 'give' ? window.tradeState.give : window.tradeState.want;
+            const maxVal = type === 'give' 
+                ? gameState.playerResources[resource] 
+                : gameState.aiCountries[window.tradeState.partner].resources[resource];
+            
+            window.tradeState[key] = Math.max(1, Math.min(maxVal, window.tradeState[key] + delta));
+            document.getElementById(`${type}-amount-display`).textContent = window.tradeState[key];
+        }
+
+        function updateProposeBtnState() {
+            const btn = document.getElementById('propose-btn');
+            const { give, want, partner } = window.tradeState;
+            btn.disabled = !(give && want && partner);
+        }
+
+        function proposeTrade() {
+            const { give, giveAmount, want, wantAmount, partner } = window.tradeState;
+            const ai = gameState.aiCountries[partner];
+
+            // AI decision logic - more likely to accept fair trades
+            const playerHas = gameState.playerResources[give];
+            const aiHas = ai.resources[want];
+            const aiNeeds = ai.resources[give] < 3;
+            const fairTrade = giveAmount >= wantAmount;
+
+            let acceptChance = 0.3; // Base chance
+            if (aiNeeds) acceptChance += 0.3;
+            if (fairTrade) acceptChance += 0.2;
+            if (giveAmount > wantAmount) acceptChance += 0.2;
+
+            if (Math.random() < acceptChance && playerHas >= giveAmount && aiHas >= wantAmount) {
+                // Trade accepted
+                gameState.playerResources[give] -= giveAmount;
+                gameState.playerResources[want] += wantAmount;
+                ai.resources[give] += giveAmount;
+                ai.resources[want] -= wantAmount;
+                gameState.score += 15;
+
+                addLog(`You traded ${giveAmount} ${resourceInfo[give].emoji} with ${ai.emoji} for ${wantAmount} ${resourceInfo[want].emoji}`);
+                showNotification(`${ai.emoji} ${ai.name} accepted your trade!`, 'success');
+            } else {
+                addLog(`${ai.emoji} ${ai.name} declined your trade offer`);
+                showNotification(`${ai.emoji} ${ai.name} declined your offer`, 'error');
+            }
+
+            updateAllDisplays();
+            setTimeout(() => startRound(), 1500);
+        }
+
+        function generateAIProposal() {
+            // 60% chance an AI proposes to player each round
+            if (Math.random() > 0.6) return null;
+
+            const aiIds = Object.keys(gameState.aiCountries);
+            const proposerId = aiIds[Math.floor(Math.random() * aiIds.length)];
+            const ai = gameState.aiCountries[proposerId];
+
+            // Find what AI has excess of and what player has
+            const aiExcess = Object.entries(ai.resources).filter(([_, v]) => v > 2).map(([k]) => k);
+            const playerExcess = Object.entries(gameState.playerResources).filter(([_, v]) => v > 1).map(([k]) => k);
+
+            if (aiExcess.length === 0 || playerExcess.length === 0) return null;
+
+            const options = [];
+            for (let i = 0; i < Math.min(2, aiExcess.length); i++) {
+                const aiGives = aiExcess[i];
+                const playerGives = playerExcess[Math.floor(Math.random() * playerExcess.length)];
+                if (aiGives !== playerGives) {
+                    options.push({
+                        giveType: playerGives,
+                        give: 1,
+                        getType: aiGives,
+                        get: 1
+                    });
+                }
+            }
+
+            if (options.length === 0) return null;
+
+            return {
+                from: ai,
+                fromId: proposerId,
+                options
+            };
+        }
+
+        function respondToAI(optionIndex) {
+            const proposal = gameState.pendingTrade;
+            const opt = proposal.options[optionIndex];
+            const ai = gameState.aiCountries[proposal.fromId];
+
+            if (gameState.playerResources[opt.giveType] >= opt.give) {
+                gameState.playerResources[opt.giveType] -= opt.give;
+                gameState.playerResources[opt.getType] += opt.get;
+                ai.resources[opt.giveType] += opt.give;
+                ai.resources[opt.getType] -= opt.get;
+                gameState.score += 10;
+
+                addLog(`You accepted ${proposal.from.emoji}'s trade: ${opt.give} ${resourceInfo[opt.giveType].emoji} for ${opt.get} ${resourceInfo[opt.getType].emoji}`);
+                showNotification('Trade completed!', 'success');
+            } else {
+                showNotification('Not enough resources!', 'error');
+            }
+
+            gameState.pendingTrade = null;
+            updateAllDisplays();
+            setTimeout(() => startRound(), 1500);
+        }
+
+        function declineAI() {
+            addLog(`You declined ${gameState.pendingTrade.from.emoji}'s trade offer`);
+            gameState.pendingTrade = null;
+            showNotification('Trade declined', 'info');
+            setTimeout(() => startRound(), 1000);
+        }
+
+        function skipTurn() {
+            addLog('You skipped your turn');
+            startRound();
+        }
+
+        // ===== QUESTIONS =====
+        function showQuestion() {
+            const difficulty = getQuestionDifficulty();
+            const pool = questions[difficulty].filter((_, i) => !usedQuestions[difficulty]?.includes(i));
+            
+            if (pool.length === 0) {
+                showNotification('No more questions at this difficulty!', 'info');
+                return;
+            }
+
+            const qIndex = Math.floor(Math.random() * pool.length);
+            const question = pool[qIndex];
+            
+            if (!usedQuestions[difficulty]) usedQuestions[difficulty] = [];
+            usedQuestions[difficulty].push(questions[difficulty].indexOf(question));
+
+            const stakes = getQuestionStakes(difficulty);
+
+            const content = document.getElementById('game-content');
+            content.innerHTML = `
+                <div class="question-card">
+                    <div class="question-header">
+                        <span class="question-badge difficulty-${difficulty}">${difficulty.toUpperCase()}</span>
+                        <div class="stakes-display">
+                            <span class="bonus">✓ +${stakes.bonus} random resource</span> | 
+                            <span class="penalty">✗ -${stakes.penalty} random resource</span>
+                        </div>
+                    </div>
+                    <p class="question-text">${question.q}</p>
+                    <div class="answer-options">
+                        ${question.opts.map((opt, i) => `
+                            <button class="answer-btn" onclick="answerQuestion(${question.correct}, ${i}, '${difficulty}')">
+                                ${String.fromCharCode(65 + i)}. ${opt}
+                            </button>
+                        `).join('')}
+                    </div>
+                    <div class="feedback" id="feedback"></div>
+                </div>
+            `;
+
+            window.currentQuestion = { question, difficulty, stakes };
+        }
+
+        let usedQuestions = {};
+
+        function getQuestionDifficulty() {
+            const round = gameState.round;
+            if (round <= 2) return 'easy';
+            if (round <= 5) return 'medium';
+            if (round <= 8) return 'hard';
+            return 'expert';
+        }
+
+        function getQuestionStakes(difficulty) {
+            const stakes = {
+                easy: { bonus: 1, penalty: 1 },
+                medium: { bonus: 2, penalty: 1 },
+                hard: { bonus: 2, penalty: 2 },
+                expert: { bonus: 3, penalty: 2 }
+            };
+            return stakes[difficulty];
+        }
+
+        function answerQuestion(correct, selected, difficulty) {
+            const buttons = document.querySelectorAll('.answer-btn');
+            const feedback = document.getElementById('feedback');
+            const { question, stakes } = window.currentQuestion;
+
+            buttons.forEach((btn, i) => {
+                btn.classList.add('disabled');
+                if (i === correct) btn.classList.add('correct');
+                else if (i === selected) btn.classList.add('incorrect');
+            });
+
+            const isCorrect = selected === correct;
+            const resources = Object.keys(resourceInfo);
+            
+            let rewardText = '';
+            if (isCorrect) {
+                // Give bonus resources
+                for (let i = 0; i < stakes.bonus; i++) {
+                    const randResource = resources[Math.floor(Math.random() * resources.length)];
+                    gameState.playerResources[randResource]++;
+                    rewardText += `+1 ${resourceInfo[randResource].emoji} `;
+                }
+                gameState.score += 25;
+                addLog(`Correct answer! Earned ${rewardText}`);
+            } else {
+                // Remove penalty resources
+                for (let i = 0; i < stakes.penalty; i++) {
+                    const available = resources.filter(r => gameState.playerResources[r] > 0);
+                    if (available.length > 0) {
+                        const randResource = available[Math.floor(Math.random() * available.length)];
+                        gameState.playerResources[randResource]--;
+                        rewardText += `-1 ${resourceInfo[randResource].emoji} `;
+                    }
+                }
+                addLog(`Wrong answer! Lost ${rewardText}`);
+            }
+
+            feedback.className = `feedback show ${isCorrect ? 'correct' : 'incorrect'}`;
+            feedback.innerHTML = `
+                <strong>${isCorrect ? '✅ Correct!' : '❌ Incorrect!'}</strong>
+                <span class="resource-reward ${isCorrect ? 'bonus' : 'penalty'}">${rewardText}</span>
+                <br><br>${question.explanation}
+            `;
+
+            updateAllDisplays();
+            setTimeout(() => startRound(), 3000);
+        }
+
+        // ===== VICTORY & END GAME =====
+        function checkVictory() {
+            // Check if player has won
+            const playerWon = Object.values(gameState.playerResources).every(v => v >= VICTORY_GOAL);
+            if (playerWon) return 'player';
+
+            // Check if any AI has won
+            for (const [id, ai] of Object.entries(gameState.aiCountries)) {
+                if (Object.values(ai.resources).every(v => v >= VICTORY_GOAL)) {
+                    return id;
+                }
+            }
+
+            return null;
+        }
+
+        function endGame() {
+            gameState.gameOver = true;
+            const winner = checkVictory();
+            const standings = getStandings();
+            const playerRank = standings.findIndex(s => s.id === gameState.playerCountry) + 1;
+            const playerWon = winner === 'player' || (winner === null && playerRank === 1);
+
+            const header = document.getElementById('results-header');
+            header.className = `results-header ${playerWon ? 'victory' : 'defeat'}`;
+            header.querySelector('h2').textContent = playerWon ? '🏆 Victory!' : '💔 Defeat';
+            document.getElementById('results-subtitle').textContent = playerWon 
+                ? (winner === 'player' ? 'You achieved the Victory Goal!' : 'You have the most resources!')
+                : (winner ? `${gameState.aiCountries[winner].name} achieved the Victory Goal!` : 'Another nation has more resources.');
+
+            const standingsDiv = document.getElementById('final-standings');
+            standingsDiv.innerHTML = standings.map((entry, idx) => {
+                const isPlayer = entry.id === gameState.playerCountry;
+                const isWinner = idx === 0;
+                const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+                return `<div class="standing-row ${isPlayer ? 'player' : ''} ${isWinner ? 'winner' : ''}">
+                    <span class="rank-medal">${medals[idx]}</span>
+                    <span class="name">${entry.emoji} ${entry.name}</span>
+                    <span class="total">${entry.total} resources</span>
+                </div>`;
+            }).join('');
+
+            const finalResources = document.getElementById('player-final-resources');
+            finalResources.innerHTML = `
+                <div class="card-title">📦 Your Final Resources</div>
+                <div class="resources-bar">
+                    ${Object.entries(gameState.playerResources).map(([key, count]) => {
+                        const info = resourceInfo[key];
+                        const met = count >= VICTORY_GOAL;
+                        return `<div class="resource-item ${info.color}" style="${met ? 'border-width: 2px;' : ''}">
+                            <span class="icon">${info.emoji}</span>
+                            <span class="count">${count}</span>
+                            ${met ? '✅' : ''}
+                        </div>`;
+                    }).join('')}
+                </div>
+                <p style="margin-top: 12px; color: var(--text-muted);">Final Score: <strong style="color: var(--accent-gold);">${gameState.score}</strong> points</p>
+            `;
+
+            showScreen('results-screen');
+        }
+
+        // ===== UTILITIES =====
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showNotification(message, type = 'info') {
+            const notif = document.createElement('div');
+            notif.className = `notification ${type}`;
+            notif.textContent = message;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 3000);
+        }
+
+        function restartGame() {
+            usedQuestions = {};
+            showScreen('start-screen');
+        }
+
+        // Initialize
+        initCountrySelection();
+    </script>
+</body>
+</html>
